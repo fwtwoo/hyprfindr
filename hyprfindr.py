@@ -2,6 +2,7 @@
 import subprocess
 import argparse
 from pathlib import Path
+from enum import Enum
 
 # Shows an info dialog
 def show_info(message):
@@ -42,13 +43,17 @@ def parse_args():
     # Checking if user passed arguments or not
     if args.query is None:
         # Function for no argument (zenity prompt)
-        user_input = show_entry("Enter app/command name")
-        show_info(f"You passed '{user_input}'!")
+        input_query = show_entry("Enter app/command name")
+        show_info(f"You passed '{input_query}'!")
+        return input_query
     else:
         # Function for an argument (zenity info)
         show_info(f"You passed '{args.query}'!")
+        return args.query
 
-def split_binds(path):
+def split_binds():
+    # Config path
+    path = Path("~/.config/hypr/hyprland.conf").expanduser()
     # Create empty list
     binds = []
     # Open file and read
@@ -78,9 +83,13 @@ def split_binds(path):
 
                 # Append to list
                 binds.append(elements)
+
     return binds
 
-def split_variables(path):
+def split_variables():
+    # Config path
+    path = Path("~/.config/hypr/hyprland.conf").expanduser()
+
     # Open file and read
     with open(path, "r") as file:
         # Create dictionary
@@ -102,21 +111,66 @@ def split_variables(path):
             
         return variable_dict
 
+def get_bind_type():
+    # Create types
+    class BindType(Enum):
+        EXEC = 1
+        NOEXEC = 2
+
+    bind_lists = split_binds()
+    
+    for bind in bind_lists:
+
+        if "exec" in bind:
+            bind_type = BindType.EXEC
+        else:
+            bind_type = BindType.NOEXEC
+
+    return bind_type
+
 # Main function
 def main():
-    # Hyprland config path
-    path = Path("~/.config/hypr/hyprland.conf").expanduser()
+    # Create types
+    class BindType(Enum):
+        EXEC = 1
+        NOEXEC = 2
 
-    binds = split_binds(path)
-    variables = split_variables(path)
+    # Init variables
+    binds = split_binds()
+    variables = split_variables()
 
-    print("Collected binds:")
-    for b in binds:
-        print(b)
+    # parse_args's return value
+    user_input = parse_args()
 
-    print("Collected variables:")
-    for name, value in variables.items():
-        print(f"{name} = {value}")
+    found = False
+
+    # Loop through binds
+    for bind in binds:
+        has_exec = "exec" in bind
+        # If users input matches bind
+        if user_input in bind:
+            # Check exec and splice
+            if has_exec:
+                keybind = bind[:2] # Get first 2 items
+                command = bind[-1] # Get last item
+            else:
+                keybind = bind[:2] # Get first 2 items
+                command = bind[2] # Get 3rd item
+
+            # Join to format nicely
+            keybind_str = " + ".join(keybind)
+            
+            # print(f"Found match: {keybind_str} ➜ {command}")
+            print(f"Found match: {keybind_str} → {command}")
+            found = True
+
+    # If user input doesn't exist in bind
+    if not found:
+        print("No match found.")
+
+    #print("Collected variables:")
+    #for name, value in variables.items():
+    #    print(f"{name} = {value}")
 
 # Run the program
 if __name__ == "__main__":
