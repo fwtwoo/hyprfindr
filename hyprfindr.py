@@ -34,9 +34,39 @@ def parse_args():
     args = parser.parse_args()
     return args.query
 
+# Function for getting variables
+def split_variables():
+    # Config path
+    path = Path("~/.config/hypr/hyprland.conf").expanduser()
+
+    # Open file and read
+    with open(path, "r") as file:
+        # Create dictionary
+        variable_dict = {}
+        for line in file:
+            # Split to remove comments
+            line = line.split("#")[0]
+            # Split into two parts
+            if line.startswith("$"):
+                lhs, rhs = line.split("=", 1)
+
+                # Strip line of whitespaces
+                var_name = lhs.strip()
+                var_value = rhs.strip()
+
+                variable_dict[var_name] = var_value
+            else:
+                continue
+
+        return variable_dict
+
+# Function for gettings binds
 def split_binds():
     # Config path
     path = Path("~/.config/hypr/hyprland.conf").expanduser()
+    # Variables to use later
+    variables = split_variables()
+
     # Create empty list
     binds = []
     # Open file and read
@@ -64,35 +94,18 @@ def split_binds():
                         # Add to list
                         elements.append(parts)
 
+                # Create new list
+                translated_elements = []
+                # Loop through
+                for element in elements:
+                    for name, value in variables.items():
+                        # Replace with real variable value
+                        element = element.replace(name, value)
+                    translated_elements.append(element) # Append translated
+                 
                 # Append to list
-                binds.append(elements)
-
+                binds.append(translated_elements)
     return binds
-
-def split_variables():
-    # Config path
-    path = Path("~/.config/hypr/hyprland.conf").expanduser()
-
-    # Open file and read
-    with open(path, "r") as file:
-        # Create dictionary
-        variable_dict = {}
-        for line in file:
-            # Split to remove comments
-            line = line.split("#")[0]
-            # Split into two parts
-            if line.startswith("$"):
-                lhs, rhs = line.split("=", 1)
-
-                # Strip line of whitespaces
-                var_name = lhs.strip()
-                var_value = rhs.strip()
-
-                variable_dict[var_name] = var_value
-            else:
-                continue
-            
-        return variable_dict
 
 # Main function
 def main():
