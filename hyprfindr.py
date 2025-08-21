@@ -73,7 +73,9 @@ def split_binds():
     with open(path, "r") as file:
         for line in file:
             # Split to remove comments
-            line = line.split("#")[0]
+            line = line.split("#")[0].strip()
+            if not line:
+                continue
             # Split into two parts
             if '=' in line:
                 lhs, rhs = line.split("=", 1)
