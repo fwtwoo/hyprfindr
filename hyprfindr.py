@@ -5,22 +5,15 @@ from pathlib import Path
 from enum import Enum
 
 # Shows an info dialog
-def show_info(message):
-    subprocess.run(['zenity', '--info', '--text', message])
-
-# Shows a prompt dialog
-def show_entry(message):
-    # Writes input to stdout
-    result = subprocess.run(['zenity', '--entry', '--text', message], capture_output=True, text=True)
-    return result.stdout.strip()
+def show_notification(message):
+    subprocess.run(['zenity', '--notification', '--text', message])
 
 # Function for argument parsing
 def parse_args():
     # ArgumentParser checks for CLI argument
     parser = argparse.ArgumentParser(
         prog="hyprfindr",
-        description="Search and display Hyprland keybinds via Zenity dialogs.",
-        epilog="If no argument is given, you’ll be prompted with a Zenity entry dialog."
+        description="Search and display Hyprland keybinds via CLI and your notification daemon.",
     )
 
     # Adds the --version flag
@@ -33,23 +26,13 @@ def parse_args():
     # Adds the actual app/command name flag
     parser.add_argument(
         "query",
-        nargs="?", # "nargs" makes argument optional 
         metavar="NAME",
-        help="Application/command name to search for in keybinds"
+        help="Search keybinds by application/command name, or by a key within a key combination."
     )
 
+    # Reutrns argument
     args = parser.parse_args()
-
-    # Checking if user passed arguments or not
-    if args.query is None:
-        # Function for no argument (zenity prompt)
-        input_query = show_entry("Enter app/command name")
-        show_info(f"You passed '{input_query}'!")
-        return input_query
-    else:
-        # Function for an argument (zenity info)
-        show_info(f"You passed '{args.query}'!")
-        return args.query
+    return args.query
 
 def split_binds():
     # Config path
@@ -111,30 +94,8 @@ def split_variables():
             
         return variable_dict
 
-def get_bind_type():
-    # Create types
-    class BindType(Enum):
-        EXEC = 1
-        NOEXEC = 2
-
-    bind_lists = split_binds()
-    
-    for bind in bind_lists:
-
-        if "exec" in bind:
-            bind_type = BindType.EXEC
-        else:
-            bind_type = BindType.NOEXEC
-
-    return bind_type
-
 # Main function
 def main():
-    # Create types
-    class BindType(Enum):
-        EXEC = 1
-        NOEXEC = 2
-
     # Init variables
     binds = split_binds()
     variables = split_variables()
@@ -160,17 +121,16 @@ def main():
             # Join to format nicely
             keybind_str = " + ".join(keybind)
             
-            # print(f"Found match: {keybind_str} ➜ {command}")
-            print(f"Found match: {keybind_str} → {command}")
+            # Show notification and print output
+            msg = f"{keybind_str} → {command}"
+            show_notification(msg)
+            print(msg) # For piping or logging
+
             found = True
 
     # If user input doesn't exist in bind
     if not found:
         print("No match found.")
-
-    #print("Collected variables:")
-    #for name, value in variables.items():
-    #    print(f"{name} = {value}")
 
 # Run the program
 if __name__ == "__main__":
