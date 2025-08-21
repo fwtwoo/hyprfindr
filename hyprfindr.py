@@ -111,7 +111,6 @@ def split_binds():
 def main():
     # Init variables
     binds = split_binds()
-    variables = split_variables()
 
     # parse_args's return value
     user_input = parse_args()
@@ -121,25 +120,27 @@ def main():
     # Loop through binds
     for bind in binds:
         has_exec = "exec" in bind
-        # If users input matches bind
-        if user_input in bind:
-            # Check exec and splice
-            if has_exec:
-                keybind = bind[:2] # Get first 2 items
-                command = bind[-1] # Get last item
-            else:
-                keybind = bind[:2] # Get first 2 items
-                command = bind[2] # Get 3rd item
 
-            # Join to format nicely
-            keybind_str = " + ".join(keybind)
-            
-            # Show notification and print output
-            msg = f"{keybind_str} → {command}"
-            show_notification(msg)
-            print(msg) # For piping or logging
+        for element in bind:
+            # If users input matches bind
+            if user_input in element:
+                # Check exec and splice
+                if has_exec:
+                    keybind = bind[:2] # Get first 2 items
+                    command = bind[-1] # Get last item
+                else:
+                    keybind = bind[:2] # Get first 2 items
+                    command = bind[2] # Get 3rd item
 
-            found = True
+                # Join to format nicely
+                keybind_str = " + ".join(keybind)
+                
+                # Show notification and print output
+                msg = f"{keybind_str} → {command}"
+                show_notification(msg)
+                print(msg) # For piping or logging
+
+                found = True
 
     # If user input doesn't exist in bind
     if not found:
