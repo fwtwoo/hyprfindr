@@ -53,6 +53,7 @@ python hyprfindr.py firefox
 ```bash
 sudo install -Dm755 hyprfindr.py /usr/local/bin/hyprfindr
 ```
+---
 
 ### ⚙️ Usage
 
